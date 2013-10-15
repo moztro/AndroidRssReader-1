@@ -24,44 +24,59 @@ import com.nerdability.android.util.DateUtils;
 
 
 public class ArticleListAdapter extends ArrayAdapter<Article> {
-
+	
+	private Activity myContext;
+	
 	public ArticleListAdapter(Activity activity, List<Article> articles) {
 		super(activity, 0, articles);
+		myContext = activity;
 	}
 
 
+	static class ViewHolder{
+		TextView textView, dateView;
+		LinearLayout row;
+	}
+	
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		Activity activity = (Activity) getContext();
-		LayoutInflater inflater = activity.getLayoutInflater();
-
-		View rowView = inflater.inflate(R.layout.fragment_article_list, null);
+		ViewHolder viewHolder;
+		
+		if(convertView == null){
+			LayoutInflater inflater = myContext.getLayoutInflater();
+			convertView = inflater.inflate(R.layout.fragment_article_list, null);
+			
+			viewHolder = new ViewHolder();
+			viewHolder.textView = (TextView) convertView.findViewById(R.id.article_title_text);
+			viewHolder.dateView = (TextView) convertView.findViewById(R.id.article_listing_smallprint);
+			viewHolder.row = (LinearLayout) convertView.findViewById(R.id.article_row_layout);
+			convertView.setTag(viewHolder);
+		}else{
+			viewHolder = (ViewHolder)convertView.getTag();
+		}
+		
 		Article article = getItem(position);
-		
-
-		TextView textView = (TextView) rowView.findViewById(R.id.article_title_text);
-		textView.setText(article.getTitle());
-		
-		TextView dateView = (TextView) rowView.findViewById(R.id.article_listing_smallprint);
-		String pubDate = article.getPubDate();
-		SimpleDateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy kk:mm:ss Z", Locale.ENGLISH);
-		Date pDate;
-		try {
-			pDate = df.parse(pubDate);
-			pubDate = "published " + DateUtils.getDateDifference(pDate) + " by " + article.getAuthor();
-		} catch (ParseException e) {
-			Log.e("DATE PARSING", "Error parsing date..");
-			pubDate = "published by " + article.getAuthor();
+		if(article != null){
+			viewHolder.textView.setText(article.getTitle());
+			
+			String pubDate = article.getPubDate();
+			SimpleDateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy kk:mm:ss Z", Locale.ENGLISH);
+			Date pDate;
+			try {
+				pDate = df.parse(pubDate);
+				pubDate = "published " + DateUtils.getDateDifference(pDate) + " by " + article.getAuthor();
+			} catch (ParseException e) {
+				Log.e("DATE PARSING", "Error parsing date..");
+				pubDate = "published by " + article.getAuthor();
+			}
+			viewHolder.dateView.setText(pubDate);
+			
+			if (!article.isRead()){
+				viewHolder.row.setBackgroundColor(Color.WHITE);
+				viewHolder.textView.setTypeface(Typeface.DEFAULT_BOLD);
+			}
 		}
-		dateView.setText(pubDate);
-
-		
-		if (!article.isRead()){
-			LinearLayout row = (LinearLayout) rowView.findViewById(R.id.article_row_layout);
-			row.setBackgroundColor(Color.WHITE);
-			textView.setTypeface(Typeface.DEFAULT_BOLD);
-		}
-		return rowView;
+		return convertView;
 
 	} 
 }

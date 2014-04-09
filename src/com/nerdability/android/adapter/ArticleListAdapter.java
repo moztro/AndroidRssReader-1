@@ -29,39 +29,50 @@ public class ArticleListAdapter extends ArrayAdapter<Article> {
 		super(activity, 0, articles);
 	}
 
+	static class ViewHolder{
+		TextView vTextView, vDateView;
+		LinearLayout vRow;
+	}
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		Activity activity = (Activity) getContext();
-		LayoutInflater inflater = activity.getLayoutInflater();
+		ViewHolder viewHolder;
 
-		View rowView = inflater.inflate(R.layout.fragment_article_list, null);
+		if(convertView == null){
+			Activity activity = (Activity) getContext();
+			LayoutInflater inflater = activity.getLayoutInflater();
+			convertView = inflater.inflate(R.layout.fragment_article_list, null);
+
+			viewHolder = new ViewHolder();
+			viewHolder.vTextView = (TextView)convertView.findViewById(R.id.article_title_text);
+			viewHolder.vDateView = (TextView)convertView.findViewById(R.id.article_listing_smallprint);
+			viewHolder.vRow = (LinearLayout)convertView.findViewById(R.id.article_row_layout);
+			convertView.setTag(viewHolder);
+		}else{
+			viewHolder = (ViewHolder)convertView.getTag();
+		}
+
 		Article article = getItem(position);
-		
+		if(article != null){
+			viewHolder.setText(article.getTitle());
+			String pubDate = article.getPubDate();
+			SimpleDateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy kk:mm:ss Z", Locale.ENGLISH);
+			Date pDate;
+			try {
+				pDate = df.parse(pubDate);
+				pubDate = "published " + DateUtils.getDateDifference(pDate) + " by " + article.getAuthor();
+			} catch (ParseException e) {
+				Log.e("DATE PARSING", "Error parsing date..");
+				pubDate = "published by " + article.getAuthor();
+			}
+			viewHolder.vDateView.setText(pubDate);
 
-		TextView textView = (TextView) rowView.findViewById(R.id.article_title_text);
-		textView.setText(article.getTitle());
-		
-		TextView dateView = (TextView) rowView.findViewById(R.id.article_listing_smallprint);
-		String pubDate = article.getPubDate();
-		SimpleDateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy kk:mm:ss Z", Locale.ENGLISH);
-		Date pDate;
-		try {
-			pDate = df.parse(pubDate);
-			pubDate = "published " + DateUtils.getDateDifference(pDate) + " by " + article.getAuthor();
-		} catch (ParseException e) {
-			Log.e("DATE PARSING", "Error parsing date..");
-			pubDate = "published by " + article.getAuthor();
+			if(!article.isRead()){
+				viewHolder.vRow.setBackgroundColor(Color.WHITE);
+				viewHolder.vTextView.setTypeface(Typeface.DEFAULT_BOLD);
+			}
 		}
-		dateView.setText(pubDate);
 
-		
-		if (!article.isRead()){
-			LinearLayout row = (LinearLayout) rowView.findViewById(R.id.article_row_layout);
-			row.setBackgroundColor(Color.WHITE);
-			textView.setTypeface(Typeface.DEFAULT_BOLD);
-		}
-		return rowView;
-
+		return convertView;
 	} 
 }
